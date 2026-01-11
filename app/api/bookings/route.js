@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { createBooking, initDb } from '../../lib/db_init';
+import { createBooking, initDb } from '@/lib/db_init';
 
 // Ensure DB is properly initialized on first run
 let dbInitialized = false;
