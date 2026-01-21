@@ -139,6 +139,16 @@ export const seedAdminData = mutation({
             const existing = await ctx.db.query("activities").filter(q => q.and(q.eq(q.field("dogName"), a.dogName), q.eq(q.field("activity"), a.activity))).unique();
             if (!existing) await ctx.db.insert("activities", a);
         }
+
+        // Seed some Bookings
+        const bookings = [
+            { userId: "admin@dogcamp.com", serviceName: "Luxury Hosting", bookingDate: "2024-01-20", status: "confirmed", createdAt: Date.now() },
+            { userId: "john@example.com", serviceName: "Training Boot Camp", bookingDate: "2024-01-22", status: "pending", createdAt: Date.now() },
+        ];
+        for (const b of bookings) {
+            const existing = await ctx.db.query("bookings").filter(q => q.and(q.eq(q.field("userId"), b.userId), q.eq(q.field("serviceName"), b.serviceName))).unique();
+            if (!existing) await ctx.db.insert("bookings", b);
+        }
     }
 });
 // Customer Queries
@@ -156,5 +166,28 @@ export const updateActivityStatus = mutation({
     args: { id: v.id("activities"), status: v.string() },
     handler: async (ctx, args) => {
         await ctx.db.patch(args.id, { status: args.status });
+    },
+});
+
+export const getFullBookings = query({
+    handler: async (ctx) => {
+        const bookings = await ctx.db.query("bookings").order("desc").collect();
+        const results = [];
+        for (const booking of bookings) {
+            const user = await ctx.db
+                .query("users")
+                .filter((q) => q.eq(q.field("email"), booking.userId)) // We currently store email as userId in API
+                .unique();
+
+            // Try fetching by ID if no user found by email (backward compatibility)
+            const userById = !user ? await ctx.db.get(booking.userId) : null;
+
+            results.push({
+                ...booking,
+                userName: user?.name || userById?.name || "Unknown User",
+                dogName: user?.dogName || userById?.dogName || "N/A",
+            });
+        }
+        return results;
     },
 });

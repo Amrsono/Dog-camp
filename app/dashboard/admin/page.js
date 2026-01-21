@@ -36,12 +36,13 @@ export default function AdminDashboard() {
 
     // Convex data
     const foodStockData = useQuery(api.users.getFoodStock);
+    const bookingsData = useQuery(api.users.getFullBookings);
     const usersData = useQuery(api.users.getAllUsers);
     const rawActivitiesData = useQuery(api.users.getActivities);
     const updateStockMutation = useMutation(api.users.updateStock);
     const seedMutation = useMutation(api.users.seedAdminData);
 
-    const isLoading = !foodStockData || !usersData || !rawActivitiesData;
+    const isLoading = !foodStockData || !bookingsData || !usersData || !rawActivitiesData;
 
     const activitiesData = {
         today: rawActivitiesData?.filter(a => a.type === 'today') || [],
@@ -231,8 +232,8 @@ export default function AdminDashboard() {
                             className="lg:col-span-3 glass p-6"
                         >
                             <div className="flex justify-between items-center mb-6">
-                                <h3 className="text-xl font-bold">{t?.admin?.recent || 'Recent Registrations'}</h3>
-                                <button className="text-sm text-[var(--primary)] hover:underline">{t?.admin?.viewFull || 'View Full Database'}</button>
+                                <h3 className="text-xl font-bold">{t?.admin?.recent || 'Recent Bookings'}</h3>
+                                <button className="text-sm text-[var(--primary)] hover:underline">{t?.admin?.viewFull || 'View All Bookings'}</button>
                             </div>
                             <div className="overflow-x-auto">
                                 <table className="w-full text-left">
@@ -241,23 +242,35 @@ export default function AdminDashboard() {
                                             <th className="p-3">{t?.admin?.table?.user || 'User'}</th>
                                             <th className="p-3">{t?.admin?.table?.dog || 'Dog Name'}</th>
                                             <th className="p-3">{t?.admin?.table?.service || 'Service'}</th>
+                                            <th className="p-3">{t?.admin?.table?.date || 'Date'}</th>
                                             <th className="p-3">{t?.admin?.table?.status || 'Status'}</th>
-                                            <th className="p-3">{t?.admin?.table?.payment || 'Payment'}</th>
-                                            <th className="p-3">{t?.admin?.table?.amount || 'Amount (EGP)'}</th>
+                                            <th className="p-3 font-mono">{t?.admin?.table?.action || 'Action'}</th>
                                         </tr>
                                     </thead>
                                     <tbody className="divide-y divide-gray-700">
-                                        {usersData?.slice(0, 5).map((user) => (
-                                            <tr key={user._id}>
-                                                <td className="p-3">{user.name || 'Incognito'}</td>
-                                                <td className="p-3">{user.dogName || '-'}</td>
-                                                <td className="p-3">Standard</td>
-                                                <td className="p-3"><span className="bg-green-500/20 text-green-400 px-2 py-1 rounded text-xs">{t?.admin?.status?.active || 'Active'}</span></td>
-                                                <td className="p-3">Pending</td>
-                                                <td className="p-3 font-mono font-bold">0</td>
+                                        {bookingsData?.slice(0, 5).map((booking) => (
+                                            <tr key={booking._id}>
+                                                <td className="p-3">
+                                                    <div className="font-bold">{booking.userName}</div>
+                                                    <div className="text-xs text-gray-500 font-mono italic">{booking.userId}</div>
+                                                </td>
+                                                <td className="p-3">{booking.dogName}</td>
+                                                <td className="p-3">{booking.serviceName}</td>
+                                                <td className="p-3">{booking.bookingDate}</td>
+                                                <td className="p-3">
+                                                    <span className={`px-2 py-1 rounded text-xs ${booking.status === 'confirmed' ? 'bg-green-500/20 text-green-400' :
+                                                        booking.status === 'pending' ? 'bg-yellow-500/20 text-yellow-400' :
+                                                            'bg-red-500/20 text-red-400'
+                                                        }`}>
+                                                        {booking.status.toUpperCase()}
+                                                    </span>
+                                                </td>
+                                                <td className="p-3 font-mono">
+                                                    <button className="text-xs hover:text-[var(--primary)] transition-colors">Edit</button>
+                                                </td>
                                             </tr>
                                         ))}
-                                        {usersData?.length === 0 && (
+                                        {bookingsData?.length === 0 && (
                                             <tr><td colSpan="6" className="p-10 text-center text-gray-500 italic">No cosmic travelers registered yet. Click Seed data.</td></tr>
                                         )}
                                     </tbody>

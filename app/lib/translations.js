@@ -66,9 +66,9 @@ export const translations = {
                 user: 'User',
                 dog: 'Dog Name',
                 service: 'Service',
+                date: 'Date',
                 status: 'Status',
-                payment: 'Payment',
-                amount: 'Amount (EGP)'
+                action: 'Action'
             },
             status: {
                 active: 'Active',
@@ -205,9 +205,9 @@ export const translations = {
                 user: 'المستخدم',
                 dog: 'اسم الكلب',
                 service: 'الخدمة',
+                date: 'التاريخ',
                 status: 'الحالة',
-                payment: 'الدفع',
-                amount: 'المبلغ (ج.م)'
+                action: 'الإجراء'
             },
             status: {
                 active: 'نشط',
