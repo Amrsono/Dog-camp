@@ -3,7 +3,7 @@ import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useLanguage } from '../context/LanguageContext';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 
 export default function Services() {
     const { t, lang } = useLanguage();
