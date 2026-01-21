@@ -11,7 +11,15 @@ export default function Services() {
     const [selectedService, setSelectedService] = useState(null);
     const [date, setDate] = useState('');
     const [notes, setNotes] = useState('');
-    const [status, setStatus] = useState('idle'); // idle, loading, success, error
+    const [status, setStatus] = useState('idle'); // idle, loading, success, error, unauthenticated
+    const [user, setUser] = useState(null);
+
+    useEffect(() => {
+        const storedUser = localStorage.getItem('user');
+        if (storedUser) {
+            setUser(JSON.parse(storedUser));
+        }
+    }, []);
 
     const services = [
         {
@@ -68,6 +76,11 @@ export default function Services() {
         e.preventDefault();
         setStatus('loading');
 
+        if (!user) {
+            setStatus('unauthenticated');
+            return;
+        }
+
         try {
             const res = await fetch('/api/bookings', {
                 method: 'POST',
@@ -76,7 +89,7 @@ export default function Services() {
                     serviceName: selectedService,
                     date,
                     notes,
-                    userId: 1 // Mock user ID for now
+                    userId: user.email // Use email as userId to match Admin Dashboard logic
                 })
             });
 
@@ -264,6 +277,14 @@ export default function Services() {
                                     </button>
                                     {status === 'error' && (
                                         <p className="text-red-400 text-sm text-center mt-2">{lang === 'ar' ? 'حدث خطأ، حاول مرة أخرى.' : 'Something went wrong. Please try again.'}</p>
+                                    )}
+                                    {status === 'unauthenticated' && (
+                                        <div className="mt-4 p-4 bg-red-500/10 border border-red-500/50 rounded-xl text-center">
+                                            <p className="text-red-400 text-sm mb-2">{lang === 'ar' ? 'يجب تسجيل الدخول للحجز.' : 'Please sign in to make a booking.'}</p>
+                                            <a href="/login" className="text-white text-sm font-bold underline hover:text-[var(--primary)] transition-colors">
+                                                {lang === 'ar' ? 'تسجيل الدخول' : 'Sign In Now'}
+                                            </a>
+                                        </div>
                                     )}
                                 </form>
                             )}
