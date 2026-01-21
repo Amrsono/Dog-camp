@@ -140,7 +140,7 @@ export const seedAdminData = mutation({
             if (!existing) await ctx.db.insert("activities", a);
         }
 
-        // Seed some Bookings
+        // Seed Bookings
         const bookings = [
             { userId: "admin@dogcamp.com", serviceName: "Luxury Hosting", bookingDate: "2024-01-20", status: "confirmed", createdAt: Date.now() },
             { userId: "john@example.com", serviceName: "Training Boot Camp", bookingDate: "2024-01-22", status: "pending", createdAt: Date.now() },
@@ -148,6 +148,20 @@ export const seedAdminData = mutation({
         for (const b of bookings) {
             const existing = await ctx.db.query("bookings").filter(q => q.and(q.eq(q.field("userId"), b.userId), q.eq(q.field("serviceName"), b.serviceName))).unique();
             if (!existing) await ctx.db.insert("bookings", b);
+        }
+
+        // Seed Services
+        const services = [
+            { key: 'luxuryHosting', name: 'Luxury Hosting', price: 2500, category: 'hosting' },
+            { key: 'gourmetFeeding', name: 'Gourmet Feeding', price: 750, category: 'food' },
+            { key: 'fullGrooming', name: 'Full Grooming', price: 3000, category: 'grooming' },
+            { key: 'trainingBootCamp', name: 'Training Boot Camp', price: 5000, category: 'training' },
+            { key: 'vetTeleHealth', name: 'Vet TeleHealth', price: 1500, category: 'health' },
+            { key: 'playGroup', name: 'Play Group', price: 1000, category: 'social' },
+        ];
+        for (const s of services) {
+            const existing = await ctx.db.query("services").filter(q => q.eq(q.field("key"), s.key)).unique();
+            if (!existing) await ctx.db.insert("services", s);
         }
     }
 });
@@ -166,6 +180,74 @@ export const updateActivityStatus = mutation({
     args: { id: v.id("activities"), status: v.string() },
     handler: async (ctx, args) => {
         await ctx.db.patch(args.id, { status: args.status });
+    },
+});
+
+export const addActivity = mutation({
+    args: {
+        dogName: v.string(),
+        activity: v.string(),
+        time: v.string(),
+        date: v.string(),
+        status: v.string(),
+        type: v.string()
+    },
+    handler: async (ctx, args) => {
+        await ctx.db.insert("activities", args);
+    },
+});
+
+export const updateFullActivity = mutation({
+    args: {
+        id: v.id("activities"),
+        dogName: v.string(),
+        activity: v.string(),
+        time: v.string(),
+        date: v.string(),
+        status: v.string(),
+        type: v.string()
+    },
+    handler: async (ctx, args) => {
+        const { id, ...data } = args;
+        await ctx.db.patch(id, data);
+    },
+});
+
+export const addFoodStock = mutation({
+    args: {
+        brand: v.string(),
+        formula: v.string(),
+        level: v.number(),
+        threshold: v.number(),
+    },
+    handler: async (ctx, args) => {
+        await ctx.db.insert("foodStock", args);
+    },
+});
+
+export const getServices = query({
+    handler: async (ctx) => {
+        return await ctx.db.query("services").collect();
+    },
+});
+
+export const updateServicePrice = mutation({
+    args: { id: v.id("services"), price: v.number() },
+    handler: async (ctx, args) => {
+        await ctx.db.patch(args.id, { price: args.price });
+    },
+});
+
+export const updateBooking = mutation({
+    args: {
+        id: v.id("bookings"),
+        status: v.string(),
+        serviceName: v.optional(v.string()),
+        bookingDate: v.optional(v.string())
+    },
+    handler: async (ctx, args) => {
+        const { id, ...data } = args;
+        await ctx.db.patch(id, data);
     },
 });
 

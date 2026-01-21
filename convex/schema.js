@@ -32,4 +32,10 @@ export default defineSchema({
         status: v.string(), // 'pending', 'active', 'scheduled'
         type: v.string(), // 'today', 'week', 'month'
     }),
+    services: defineTable({
+        key: v.string(), // e.g., 'luxuryHosting'
+        name: v.string(),
+        price: v.number(),
+        category: v.optional(v.string()),
+    }),
 });
