@@ -127,13 +127,34 @@ export const seedAdminData = mutation({
         // Seed Activities
         const acts = [
             { dogName: 'Buddy', activity: 'Grooming', time: '10:00 AM', date: 'Today', status: 'pending', type: 'today' },
+            { dogName: 'Buddy', activity: 'Walk', time: '02:00 PM', date: 'Today', status: 'scheduled', type: 'today' },
+            { dogName: 'Buddy', activity: 'Breakfast Meal', time: '08:00 AM', date: 'Today', status: 'served', type: 'today' },
+            { dogName: 'Buddy', activity: 'Lunch Meal', time: '01:00 PM', date: 'Today', status: 'served', type: 'today' },
+            { dogName: 'Buddy', activity: 'Dinner Meal', time: '07:00 PM', date: 'Today', status: 'pending', type: 'today' },
             { dogName: 'Luna', activity: 'Training', time: '11:30 AM', date: 'Today', status: 'active', type: 'today' },
-            { dogName: 'Cooper', activity: 'Walk', time: '02:00 PM', date: 'Today', status: 'scheduled', type: 'today' },
+            { dogName: 'Luna', activity: 'Breakfast Meal', time: '08:30 AM', date: 'Today', status: 'served', type: 'today' },
             { dogName: 'Max', activity: 'Vet Visit', time: '-', date: 'Tue, 14 Jan', status: 'scheduled', type: 'week' },
         ];
         for (const a of acts) {
-            const existing = await ctx.db.query("activities").filter(q => q.eq(q.field("dogName"), a.dogName)).unique();
+            const existing = await ctx.db.query("activities").filter(q => q.and(q.eq(q.field("dogName"), a.dogName), q.eq(q.field("activity"), a.activity))).unique();
             if (!existing) await ctx.db.insert("activities", a);
         }
     }
+});
+// Customer Queries
+export const getDogActivities = query({
+    args: { dogName: v.string() },
+    handler: async (ctx, args) => {
+        return await ctx.db
+            .query("activities")
+            .filter((q) => q.eq(q.field("dogName"), args.dogName))
+            .collect();
+    },
+});
+
+export const updateActivityStatus = mutation({
+    args: { id: v.id("activities"), status: v.string() },
+    handler: async (ctx, args) => {
+        await ctx.db.patch(args.id, { status: args.status });
+    },
 });

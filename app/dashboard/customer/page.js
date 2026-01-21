@@ -5,6 +5,8 @@ import { useState, useEffect } from 'react';
 import Image from 'next/image';
 import { useLanguage } from '../../context/LanguageContext';
 import LiveFeed from '../../components/LiveFeed';
+import { useQuery, useMutation } from "convex/react";
+import { api } from "@/convex/_generated/api";
 
 export default function CustomerDashboard() {
     const [activeTab, setActiveTab] = useState('cam');
@@ -19,6 +21,12 @@ export default function CustomerDashboard() {
             setUser(JSON.parse(storedUser));
         }
     }, []);
+
+    // Convex data
+    const activities = useQuery(api.users.getDogActivities,
+        user?.dogName ? { dogName: user.dogName } : "skip"
+    );
+    const updateActivity = useMutation(api.users.updateActivityStatus);
 
     const dispatchTreat = () => {
         setTreatSent(true);
@@ -146,16 +154,31 @@ export default function CustomerDashboard() {
                             >
                                 <h2 className="text-2xl font-bold mb-6">{t?.dashboard?.food?.title || 'Today\'s Menu'}</h2>
                                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                                    {['Breakfast', 'Lunch', 'Dinner'].map((meal) => (
-                                        <div key={meal} className="bg-white/5 p-6 rounded-xl border border-white/10">
-                                            <h3 className="text-[var(--accent)] font-bold text-lg mb-2">{meal}</h3>
-                                            <p className="text-sm text-gray-300 mb-4">Premium Salmon & Rice Mix with vitamin supplements.</p>
-                                            <div className="flex justify-between items-center text-xs text-gray-500">
-                                                <span>08:00 AM</span>
-                                                <span className="text-green-400">{t?.dashboard?.food?.served || '✓ Served'}</span>
+                                    {(activities?.filter(a => a.activity.toLowerCase().includes('meal') || a.activity.toLowerCase().includes('feed')) || []).length > 0 ? (
+                                        activities.filter(a => a.activity.toLowerCase().includes('meal') || a.activity.toLowerCase().includes('feed')).map((act, idx) => (
+                                            <div key={idx} className="bg-white/5 p-6 rounded-xl border border-white/10">
+                                                <h3 className="text-[var(--accent)] font-bold text-lg mb-2">{act.activity}</h3>
+                                                <p className="text-sm text-gray-300 mb-4">{t?.dashboard?.food?.servedDesc || 'Premium Salmon & Rice Mix with vitamin supplements.'}</p>
+                                                <div className="flex justify-between items-center text-xs text-gray-500">
+                                                    <span>{act.time}</span>
+                                                    <span className={act.status === 'served' ? 'text-green-400' : 'text-yellow-400'}>
+                                                        {act.status === 'served' ? (t?.dashboard?.food?.served || '✓ Served') : (t?.dashboard?.food?.pending || 'Pending')}
+                                                    </span>
+                                                </div>
                                             </div>
-                                        </div>
-                                    ))}
+                                        ))
+                                    ) : (
+                                        ['Breakfast', 'Lunch', 'Dinner'].map((meal) => (
+                                            <div key={meal} className="bg-white/5 p-6 rounded-xl border border-white/10">
+                                                <h3 className="text-[var(--accent)] font-bold text-lg mb-2">{meal}</h3>
+                                                <p className="text-sm text-gray-300 mb-4">Premium Salmon & Rice Mix with vitamin supplements.</p>
+                                                <div className="flex justify-between items-center text-xs text-gray-500">
+                                                    <span>08:00 AM</span>
+                                                    <span className="text-green-400">{t?.dashboard?.food?.served || '✓ Served'}</span>
+                                                </div>
+                                            </div>
+                                        ))
+                                    )}
                                 </div>
                                 <div className="mt-8 pt-8 border-t border-white/10">
                                     <h3 className="font-bold mb-4">{t?.dashboard?.food?.customize || 'Customize Diet Plan'}</h3>
@@ -224,14 +247,30 @@ export default function CustomerDashboard() {
                                 className="lg:col-span-3 glass p-8"
                             >
                                 <h2 className="text-2xl font-bold mb-6">{t?.dashboard?.walking?.title || 'Walking Schedule'}</h2>
-                                <p className="mb-4">{t?.dashboard?.walking?.desc || 'Select preferred walking times for Buddy.'}</p>
+                                <p className="mb-4">{t?.dashboard?.walking?.desc || (user?.dogName ? `Select preferred walking times for ${user.dogName}.` : 'Select preferred walking times.')}</p>
                                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                                    {['Morning (7AM)', 'Noon (12PM)', 'Afternoon (4PM)', 'Evening (8PM)'].map(time => (
-                                        <label key={time} className="flex items-center space-x-3 p-4 border border-white/20 rounded-lg cursor-pointer hover:bg-white/5">
-                                            <input type="checkbox" className="form-checkbox h-5 w-5 text-[var(--primary)] rounded focus:ring-0" defaultChecked />
-                                            <span>{time}</span>
-                                        </label>
-                                    ))}
+                                    {activities?.filter(a => a.activity.toLowerCase().includes('walk')).length > 0 ? (
+                                        activities.filter(a => a.activity.toLowerCase().includes('walk')).map((act, idx) => (
+                                            <label key={idx} className="flex items-center space-x-3 p-4 border border-white/20 rounded-lg cursor-pointer hover:bg-white/5 transition-colors">
+                                                <input
+                                                    type="checkbox"
+                                                    className="form-checkbox h-5 w-5 text-[var(--primary)] rounded focus:ring-0"
+                                                    checked={act.status !== 'pending'}
+                                                    onChange={async (e) => {
+                                                        await updateActivity({ id: act._id, status: e.target.checked ? 'scheduled' : 'pending' });
+                                                    }}
+                                                />
+                                                <span>{act.time}</span>
+                                            </label>
+                                        ))
+                                    ) : (
+                                        ['Morning (7AM)', 'Noon (12PM)', 'Afternoon (4PM)', 'Evening (8PM)'].map(time => (
+                                            <label key={time} className="flex items-center space-x-3 p-4 border border-white/20 rounded-lg cursor-pointer hover:bg-white/5">
+                                                <input type="checkbox" className="form-checkbox h-5 w-5 text-[var(--primary)] rounded focus:ring-0" defaultChecked />
+                                                <span>{time}</span>
+                                            </label>
+                                        ))
+                                    )}
                                 </div>
                                 <button className="mt-6 bg-[var(--primary)] px-6 py-2 rounded-lg font-bold">{t?.dashboard?.walking?.save || 'Save Schedule'}</button>
                             </motion.div>
