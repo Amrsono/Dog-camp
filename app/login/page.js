@@ -87,11 +87,6 @@ export default function Login() {
                 </form>
                 <div className="mt-6 text-center text-sm text-gray-400">
                     <p>Don't have an account? <a href="/register" className="text-[var(--secondary)] hover:underline">Register here</a></p>
-                    <div className="mt-4 p-4 border border-gray-700 rounded bg-black/20 text-xs text-left">
-                        <p className="font-bold text-gray-300 mb-1">Demo Credentials:</p>
-                        <p>Admin: admin@dogcamp.com / admin123</p>
-                        <p>Customer: john@example.com / password</p>
-                    </div>
                 </div>
             </motion.div>
         </div>

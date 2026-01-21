@@ -11,18 +11,29 @@ export default function Register() {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
-        // For this demo, we can just redirect to login or mock success
-        // In a real app, POST to /api/auth/register
-
-        // Simulate API call
         setError('');
-        if (!formData.email || !formData.password) {
+
+        if (!formData.email || !formData.password || !formData.name) {
             setError('Please fill in all fields');
             return;
         }
 
-        // Mock success
-        router.push('/login');
+        try {
+            const res = await fetch('/api/auth/register', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(formData),
+            });
+
+            if (res.ok) {
+                router.push('/login');
+            } else {
+                const err = await res.json();
+                setError(err.error || 'Registration failed');
+            }
+        } catch (err) {
+            setError('An unexpected error occurred.');
+        }
     };
 
     return (

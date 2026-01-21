@@ -15,6 +15,8 @@ import {
     Legend,
     ArcElement,
 } from 'chart.js';
+import { useQuery, useMutation } from "convex/react";
+import { api } from "@/convex/_generated/api";
 
 ChartJS.register(
     CategoryScale,
@@ -29,33 +31,32 @@ ChartJS.register(
 
 export default function AdminDashboard() {
     const { t, lang } = useLanguage();
-    const [loading, setLoading] = useState(true);
     const [activeTab, setActiveTab] = useState('analytics'); // 'analytics' or 'stock'
     const [editingStock, setEditingStock] = useState(null);
 
-    const [foodStock, setFoodStock] = useState([
-        { id: 1, brand: 'Royal Canin', type: 'Puppy Maxi', level: 45, threshold: 20 },
-        { id: 2, brand: 'Purina Pro Plan', type: 'Adult Sensitive', level: 15, threshold: 25 },
-        { id: 3, brand: 'Orijen', type: 'Original All Life Stages', level: 60, threshold: 15 },
-        { id: 4, brand: 'Taste of the Wild', type: 'High Prairie', level: 8, threshold: 10 },
-    ]);
+    // Convex data
+    const foodStockData = useQuery(api.users.getFoodStock);
+    const bookingsData = useQuery(api.users.getAllBookings);
+    const usersData = useQuery(api.users.getAllUsers);
+    const rawActivitiesData = useQuery(api.users.getActivities);
+    const updateStockMutation = useMutation(api.users.updateStock);
+    const seedMutation = useMutation(api.users.seedAdminData);
+
+    const isLoading = !foodStockData || !bookingsData || !usersData || !rawActivitiesData;
 
     const activitiesData = {
-        today: [
-            { id: 1, dog: 'Buddy', activity: 'Grooming', time: '10:00 AM', status: 'pending' },
-            { id: 2, dog: 'Luna', activity: 'Training', time: '11:30 AM', status: 'active' },
-            { id: 3, dog: 'Cooper', activity: 'Walk', time: '02:00 PM', status: 'scheduled' },
-        ],
-        week: [
-            { id: 1, dog: 'Max', activity: 'Vet Visit', date: 'Tue, 14 Jan', status: 'scheduled' },
-            { id: 2, dog: 'Bella', activity: 'Luxury Hosting', date: 'Wed - Fri', status: 'active' },
-            { id: 3, dog: 'Charlie', activity: 'Boot Camp', date: 'Thu, 16 Jan', status: 'pending' },
-        ],
-        month: [
-            { id: 1, dog: 'Daisy', activity: 'Full Grooming', date: '21 Jan', status: 'scheduled' },
-            { id: 2, dog: 'Rocky', activity: 'Basic Training', date: '24 Jan', status: 'scheduled' },
-            { id: 3, dog: 'Milo', activity: 'Hosting', date: 'Week of 27 Jan', status: 'scheduled' },
-        ]
+        today: rawActivitiesData?.filter(a => a.type === 'today') || [],
+        week: rawActivitiesData?.filter(a => a.type === 'week') || [],
+        month: rawActivitiesData?.filter(a => a.type === 'month') || []
+    };
+
+    const handleSeed = async () => {
+        try {
+            await seedMutation();
+            alert("Database seeded successfully!");
+        } catch (err) {
+            console.error(err);
+        }
     };
 
     const [servicesPricing, setServicesPricing] = useState([
@@ -66,11 +67,6 @@ export default function AdminDashboard() {
         { id: 'vetTeleHealth', price: '1,500' },
         { id: 'playGroup', price: '1,000' },
     ]);
-
-    // Simulate data fetching
-    useEffect(() => {
-        setTimeout(() => setLoading(false), 1000);
-    }, []);
 
     const lineData = {
         labels: lang === 'ar' ? ['الاثنين', 'الثلاثاء', 'الأربعاء', 'الخميس', 'الجمعة', 'السبت', 'الأحد'] : ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
@@ -132,7 +128,7 @@ export default function AdminDashboard() {
         }
     };
 
-    if (loading) return <div className="h-screen flex items-center justify-center text-[var(--primary)] text-2xl">Loading Analytics...</div>;
+    if (isLoading) return <div className="h-screen flex items-center justify-center text-[var(--primary)] text-2xl animate-pulse">Establishing Secure Uplink...</div>;
 
     return (
         <div className="min-h-screen bg-[var(--dark)] text-white pb-20">
@@ -143,7 +139,13 @@ export default function AdminDashboard() {
                         <h1 className="text-5xl font-black tracking-tighter text-white mb-2">
                             {t?.admin?.title || 'Admin Dashboard'}
                         </h1>
-                        <p className="text-purple-400 font-medium tracking-widest text-xs uppercase">{t?.admin?.subtitle || 'Management Console'}</p>
+                        <p className="text-purple-400 font-medium tracking-widest text-xs uppercase mb-4">{t?.admin?.subtitle || 'Management Console'}</p>
+                        <button
+                            onClick={handleSeed}
+                            className="text-[10px] px-3 py-1 bg-white/5 border border-white/10 rounded-full hover:bg-white/10 transition-colors uppercase tracking-widest text-gray-400"
+                        >
+                            Seed Demo Data
+                        </button>
                     </div>
                     <div className="flex gap-4">
                         <div className="glass px-6 py-3 text-center">
@@ -246,30 +248,19 @@ export default function AdminDashboard() {
                                         </tr>
                                     </thead>
                                     <tbody className="divide-y divide-gray-700">
-                                        <tr>
-                                            <td className="p-3">Alice Smith</td>
-                                            <td className="p-3">Snoopy (Beagle)</td>
-                                            <td className="p-3">Hosting (3 Days)</td>
-                                            <td className="p-3"><span className="bg-green-500/20 text-green-400 px-2 py-1 rounded text-xs">{t?.admin?.status?.active || 'Active'}</span></td>
-                                            <td className="p-3">Credit Card</td>
-                                            <td className="p-3 font-mono font-bold">1,200</td>
-                                        </tr>
-                                        <tr>
-                                            <td className="p-3">Bob Jones</td>
-                                            <td className="p-3">Max (German Shepherd)</td>
-                                            <td className="p-3">Training Session</td>
-                                            <td className="p-3"><span className="bg-yellow-500/20 text-yellow-400 px-2 py-1 rounded text-xs">{t?.admin?.status?.pending || 'Pending'}</span></td>
-                                            <td className="p-3">Cash</td>
-                                            <td className="p-3 font-mono font-bold">450</td>
-                                        </tr>
-                                        <tr>
-                                            <td className="p-3">Charlie Day</td>
-                                            <td className="p-3">Bella (Poodle)</td>
-                                            <td className="p-3">Grooming</td>
-                                            <td className="p-3"><span className="bg-blue-500/20 text-blue-400 px-2 py-1 rounded text-xs">{t?.admin?.status?.scheduled || 'Scheduled'}</span></td>
-                                            <td className="p-3">Bank Transfer</td>
-                                            <td className="p-3 font-mono font-bold">850</td>
-                                        </tr>
+                                        {usersData?.slice(0, 5).map((user) => (
+                                            <tr key={user._id}>
+                                                <td className="p-3">{user.name || 'Incognito'}</td>
+                                                <td className="p-3">{user.dogName || '-'}</td>
+                                                <td className="p-3">Standard</td>
+                                                <td className="p-3"><span className="bg-green-500/20 text-green-400 px-2 py-1 rounded text-xs">{t?.admin?.status?.active || 'Active'}</span></td>
+                                                <td className="p-3">Pending</td>
+                                                <td className="p-3 font-mono font-bold">0</td>
+                                            </tr>
+                                        ))}
+                                        {usersData?.length === 0 && (
+                                            <tr><td colSpan="6" className="p-10 text-center text-gray-500 italic">No cosmic travelers registered yet. Click Seed data.</td></tr>
+                                        )}
                                     </tbody>
                                 </table>
                             </div>
@@ -286,7 +277,7 @@ export default function AdminDashboard() {
                             <div className="text-right">
                                 <p className="text-xs text-gray-400 uppercase tracking-widest">{t?.admin?.foodStock?.totalStock || 'Total Inventory'}</p>
                                 <p className="text-2xl font-bold font-mono text-[var(--primary)]">
-                                    {foodStock.reduce((acc, curr) => acc + curr.level, 0)} {t?.admin?.foodStock?.kg || 'kg'}
+                                    {foodStockData?.reduce((acc, curr) => acc + curr.level, 0) || 0} {t?.admin?.foodStock?.kg || 'kg'}
                                 </p>
                             </div>
                         </div>
@@ -304,19 +295,18 @@ export default function AdminDashboard() {
                                     </tr>
                                 </thead>
                                 <tbody className="divide-y divide-white/5">
-                                    {foodStock.map((item) => (
-                                        <tr key={item.id} className="hover:bg-white/[0.02] transition-colors group">
+                                    {foodStockData?.map((item) => (
+                                        <tr key={item._id} className="hover:bg-white/[0.02] transition-colors group">
                                             <td className="p-4 font-bold">{item.brand}</td>
-                                            <td className="p-4 text-gray-400">{item.type}</td>
+                                            <td className="p-4 text-gray-400">{item.formula}</td>
                                             <td className="p-4">
-                                                {editingStock === item.id ? (
+                                                {editingStock === item._id ? (
                                                     <input
                                                         type="number"
-                                                        value={item.level}
-                                                        onChange={(e) => {
-                                                            const newStock = [...foodStock];
-                                                            newStock.find(s => s.id === item.id).level = parseInt(e.target.value) || 0;
-                                                            setFoodStock(newStock);
+                                                        defaultValue={item.level}
+                                                        onBlur={async (e) => {
+                                                            await updateStockMutation({ id: item._id, level: parseInt(e.target.value) || 0 });
+                                                            setEditingStock(null);
                                                         }}
                                                         className="w-20 bg-white/10 border border-white/20 rounded px-2 py-1 focus:outline-none focus:border-[var(--primary)]"
                                                         autoFocus
@@ -339,10 +329,10 @@ export default function AdminDashboard() {
                                             </td>
                                             <td className="p-4 text-right">
                                                 <button
-                                                    onClick={() => setEditingStock(editingStock === item.id ? null : item.id)}
+                                                    onClick={() => setEditingStock(editingStock === item._id ? null : item._id)}
                                                     className="opacity-0 group-hover:opacity-100 transition-opacity text-[var(--primary)] hover:underline text-sm font-bold"
                                                 >
-                                                    {editingStock === item.id ? (t?.admin?.foodStock?.save || 'Save') : (t?.admin?.foodStock?.edit || 'Edit')}
+                                                    {editingStock === item._id ? (t?.admin?.foodStock?.save || 'Save') : (t?.admin?.foodStock?.edit || 'Edit')}
                                                 </button>
                                             </td>
                                         </tr>

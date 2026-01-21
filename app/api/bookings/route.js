@@ -1,15 +1,8 @@
 import { NextResponse } from 'next/server';
-import { createBooking, initDb } from '@/lib/db_init';
-
-// Ensure DB is properly initialized on first run
-let dbInitialized = false;
+import { convex } from '@/lib/convex';
+import { api } from '@/convex/_generated/api';
 
 export async function POST(req) {
-    if (!dbInitialized) {
-        await initDb();
-        dbInitialized = true;
-    }
-
     try {
         const body = await req.json();
         const { userId, serviceName, date, notes } = body;
@@ -19,10 +12,18 @@ export async function POST(req) {
             return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
         }
 
-        // Use a default user ID (1) if not provided, for demo purposes if auth isn't strict
-        const finalUserId = userId || 1;
+        // In Convex, we need a valid ID. For demo, if no userId, we might need a fallback
+        // but ideally the client should provide it after login.
+        if (!userId) {
+            return NextResponse.json({ error: 'User ID is required' }, { status: 401 });
+        }
 
-        await createBooking(finalUserId, serviceName, date, notes);
+        await convex.mutation(api.users.createBooking, {
+            userId,
+            serviceName,
+            bookingDate: date,
+            notes: notes || ""
+        });
 
         return NextResponse.json({ success: true, message: 'Booking confirmed!' });
     } catch (error) {

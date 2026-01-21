@@ -4,6 +4,7 @@ export const metadata = {
 }
 
 import { LanguageProvider } from './context/LanguageContext';
+import { ConvexClientProvider } from './ConvexClientProvider';
 import './globals.css'
 
 export default function RootLayout({ children }) {
@@ -15,9 +16,11 @@ export default function RootLayout({ children }) {
                 <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Cairo:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet" />
             </head>
             <body className="antialiased min-h-screen" suppressHydrationWarning>
-                <LanguageProvider>
-                    {children}
-                </LanguageProvider>
+                <ConvexClientProvider>
+                    <LanguageProvider>
+                        {children}
+                    </LanguageProvider>
+                </ConvexClientProvider>
             </body>
         </html>
     )

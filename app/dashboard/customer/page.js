@@ -1,16 +1,26 @@
 'use client';
 import Navbar from '../../components/Navbar';
 import { motion, AnimatePresence } from 'framer-motion';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Image from 'next/image';
 import { useLanguage } from '../../context/LanguageContext';
 import LiveFeed from '../../components/LiveFeed';
+import { useQuery } from "convex/react";
+import { api } from "@/convex/_generated/api";
 
 export default function CustomerDashboard() {
     const [activeTab, setActiveTab] = useState('cam');
     const [treatSent, setTreatSent] = useState(false);
     const [streamUrl, setStreamUrl] = useState(''); // User can set their IP cam URL here
+    const [user, setUser] = useState(null);
     const { t } = useLanguage();
+
+    useEffect(() => {
+        const storedUser = localStorage.getItem('user');
+        if (storedUser) {
+            setUser(JSON.parse(storedUser));
+        }
+    }, []);
 
     const dispatchTreat = () => {
         setTreatSent(true);
@@ -29,8 +39,8 @@ export default function CustomerDashboard() {
             <Navbar />
 
             <div className="pt-20 px-4 max-w-7xl mx-auto">
-                <h1 className="text-3xl font-bold mb-2">{t?.dashboard?.hello || 'Hello,'} <span className="text-[var(--primary)]">John Doe</span></h1>
-                <p className="text-gray-400 mb-8">{t?.dashboard?.status || 'Here is how "Buddy" is doing today.'}</p>
+                <h1 className="text-3xl font-bold mb-2">{t?.dashboard?.hello || 'Hello,'} <span className="text-[var(--primary)]">{user?.name || 'Explorer'}</span></h1>
+                <p className="text-gray-400 mb-8">{t?.dashboard?.status || (user?.dogName ? `Here is how "${user.dogName}" is doing today.` : 'Here is how your companion is doing today.')}</p>
 
                 {/* Tab Navigation */}
                 <div className="flex overflow-x-auto space-x-4 mb-8 pb-2">
