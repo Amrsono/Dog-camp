@@ -1,11 +1,11 @@
+import { LanguageProvider } from './context/LanguageContext';
+import { ConvexClientProvider } from './ConvexClientProvider';
+import './globals.css'
+
 export const metadata = {
     title: 'Dog-Camp | Premium Dog Hosting',
     description: 'A customized dog world where owners stay connected.',
 }
-
-import { LanguageProvider } from './context/LanguageContext';
-import { ConvexClientProvider } from './ConvexClientProvider';
-import './globals.css'
 
 export default function RootLayout({ children }) {
     return (

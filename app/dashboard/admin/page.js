@@ -36,13 +36,12 @@ export default function AdminDashboard() {
 
     // Convex data
     const foodStockData = useQuery(api.users.getFoodStock);
-    const bookingsData = useQuery(api.users.getAllBookings);
     const usersData = useQuery(api.users.getAllUsers);
     const rawActivitiesData = useQuery(api.users.getActivities);
     const updateStockMutation = useMutation(api.users.updateStock);
     const seedMutation = useMutation(api.users.seedAdminData);
 
-    const isLoading = !foodStockData || !bookingsData || !usersData || !rawActivitiesData;
+    const isLoading = !foodStockData || !usersData || !rawActivitiesData;
 
     const activitiesData = {
         today: rawActivitiesData?.filter(a => a.type === 'today') || [],
